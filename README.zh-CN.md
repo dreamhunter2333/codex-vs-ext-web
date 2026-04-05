@@ -65,13 +65,15 @@ graph TB
 - **Bun** 1.x
 - **官方 VS Code Codex 扩展** 解压到 `vendor/codex/`
 - **平台支持**
-  - **macOS** — 目前只支持 `darwin-arm64`
+  - **macOS**
+  - **Windows**
+  - **Linux**
 
-当前二进制解析路径：
+二进制解析顺序：
 
-```text
-vendor/codex/bin/macos-aarch64/codex
-```
+1. 优先使用 `vendor/codex/bin/...` 下匹配当前平台的二进制
+2. `CODEX_CLI_PATH`
+3. 系统 `PATH` 里的 `codex` 或 `codex.exe`
 
 见 `src/config.ts`。
 
@@ -106,12 +108,29 @@ bun run check
 
 **方式 1：从本机已安装的 VS Code 扩展复制**
 
+**Windows：**
+
 ```bash
-ls -d ~/.vscode/extensions/openai.chatgpt-*
-cp -r ~/.vscode/extensions/openai.chatgpt-<VERSION>-darwin-arm64 vendor/codex
+dir "%USERPROFILE%\\.vscode\\extensions\\openai.chatgpt-*"
+xcopy /E /I "%USERPROFILE%\\.vscode\\extensions\\openai.chatgpt-<VERSION>" vendor\\codex\\
 ```
 
-**方式 2：从 VSIX 文件解压**
+**macOS / Linux：**
+
+```bash
+ls -d ~/.vscode/extensions/openai.chatgpt-*
+cp -r ~/.vscode/extensions/openai.chatgpt-<VERSION> vendor/codex/
+```
+
+> 把 `<VERSION>` 替换成你要使用的扩展版本目录名。
+
+**方式 2：直接从 VS Code 下载 VSIX**
+
+在 VS Code 扩展面板中，为 Codex 扩展选择 **Download Specific Version VSIX...**：
+
+<img src="readme-assets/download-vsix.png" alt="从 VS Code 下载 VSIX" width="400"/>
+
+然后解压下载好的 `.vsix` 文件：
 
 ```bash
 unzip openai-chatgpt.vsix -d temp-extract
@@ -119,15 +138,19 @@ mv temp-extract/extension/* vendor/codex/
 rm -rf temp-extract
 ```
 
-如果你更习惯从 VS Code 里直接下载 VSIX，可以在扩展面板里选择 **Download Specific Version VSIX...**：
+**方式 3：从已有 `.vsix` 文件解压**
 
-<img src="readme-assets/download-vsix.png" alt="从 VS Code 下载 VSIX" width="400"/>
+```bash
+unzip openai-chatgpt.vsix -d temp-extract
+mv temp-extract/extension/* vendor/codex/
+rm -rf temp-extract
+```
 
 **更新 vendor 目录：**
 
 ```bash
 rm -rf vendor/codex
-cp -r ~/.vscode/extensions/openai.chatgpt-<VERSION>-darwin-arm64 vendor/codex
+cp -r ~/.vscode/extensions/openai.chatgpt-<VERSION> vendor/codex/
 grep '"version"' vendor/codex/package.json
 ```
 
@@ -136,6 +159,13 @@ grep '"version"' vendor/codex/package.json
 - `vendor/codex/webview`
 - `vendor/codex/bin`
 - `vendor/codex/resources`
+
+具体二进制子目录会随平台不同，例如：
+
+- `vendor/codex/bin/macos-aarch64/codex`
+- `vendor/codex/bin/macos-x86_64/codex`
+- `vendor/codex/bin/linux-x86_64/codex`
+- `vendor/codex/bin/windows-x86_64/codex.exe`
 
 ## 命令
 
@@ -154,6 +184,7 @@ grep '"version"' vendor/codex/package.json
 |------|------|--------|
 | `PORT` | Web 服务端口 | `4187` |
 | `CODEX_APP_SERVER_PORT` | 本地 `codex app-server` 端口 | `4188` |
+| `CODEX_CLI_PATH` | 手动指定 Codex CLI 二进制路径 | 未设置 |
 
 示例：
 
@@ -224,7 +255,7 @@ Bun 服务器负责：
 <summary><b>已知限制</b></summary>
 
 - **不是官方插件的 1:1 完整复刻** — 只实现了当前前端运行所需的宿主行为
-- **平台支持较窄** — 目前只接了 `darwin-arm64`
+- **平台支持取决于你的二进制** — 需要匹配平台的 vendor 二进制，或者系统 `PATH` 中可用的 `codex`
 - **部分宿主接口仍是最小实现** — 远程连接、MCP、环境管理还不完整
 - **文件选择 UX 还在打磨** — 上传已可用，但交互还没完全对齐扩展
 - **vendor 升级后可能要重新适配** — `vendor/codex` 内部变化会影响外层壳

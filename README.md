@@ -65,13 +65,15 @@ graph TB
 - **Bun** 1.x
 - **Official VS Code Codex extension** extracted into `vendor/codex/`
 - **Platform Support**
-  - **macOS** — `darwin-arm64` only
+  - **macOS**
+  - **Windows**
+  - **Linux**
 
-Current binary resolution:
+Binary resolution order:
 
-```text
-vendor/codex/bin/macos-aarch64/codex
-```
+1. Matching platform binary from `vendor/codex/bin/...`
+2. `CODEX_CLI_PATH`
+3. System `codex` or `codex.exe` from `PATH`
 
 See `src/config.ts`.
 
@@ -106,12 +108,29 @@ Extract the official VS Code Codex extension into `vendor/codex/`. Do not copy b
 
 **Option 1: From an installed VS Code extension**
 
+**Windows:**
+
 ```bash
-ls -d ~/.vscode/extensions/openai.chatgpt-*
-cp -r ~/.vscode/extensions/openai.chatgpt-<VERSION>-darwin-arm64 vendor/codex
+dir "%USERPROFILE%\\.vscode\\extensions\\openai.chatgpt-*"
+xcopy /E /I "%USERPROFILE%\\.vscode\\extensions\\openai.chatgpt-<VERSION>" vendor\\codex\\
 ```
 
-**Option 2: From a VSIX file**
+**macOS / Linux:**
+
+```bash
+ls -d ~/.vscode/extensions/openai.chatgpt-*
+cp -r ~/.vscode/extensions/openai.chatgpt-<VERSION> vendor/codex/
+```
+
+> Replace `<VERSION>` with the extension version directory you want to use.
+
+**Option 2: Download VSIX directly from VS Code**
+
+In the VS Code extensions panel, choose **Download Specific Version VSIX...** for the Codex extension:
+
+<img src="readme-assets/download-vsix.png" alt="Download VSIX from VS Code" width="400"/>
+
+Then extract the downloaded `.vsix` file:
 
 ```bash
 unzip openai-chatgpt.vsix -d temp-extract
@@ -119,15 +138,19 @@ mv temp-extract/extension/* vendor/codex/
 rm -rf temp-extract
 ```
 
-If you prefer downloading a VSIX from VS Code, choose **Download Specific Version VSIX...** from the extension panel:
+**Option 3: From an existing `.vsix` file**
 
-<img src="readme-assets/download-vsix.png" alt="Download VSIX from VS Code" width="400"/>
+```bash
+unzip openai-chatgpt.vsix -d temp-extract
+mv temp-extract/extension/* vendor/codex/
+rm -rf temp-extract
+```
 
 **Updating the vendor directory:**
 
 ```bash
 rm -rf vendor/codex
-cp -r ~/.vscode/extensions/openai.chatgpt-<VERSION>-darwin-arm64 vendor/codex
+cp -r ~/.vscode/extensions/openai.chatgpt-<VERSION> vendor/codex/
 grep '"version"' vendor/codex/package.json
 ```
 
@@ -136,6 +159,13 @@ Required directories:
 - `vendor/codex/webview`
 - `vendor/codex/bin`
 - `vendor/codex/resources`
+
+The exact binary subdirectory depends on your platform, for example:
+
+- `vendor/codex/bin/macos-aarch64/codex`
+- `vendor/codex/bin/macos-x86_64/codex`
+- `vendor/codex/bin/linux-x86_64/codex`
+- `vendor/codex/bin/windows-x86_64/codex.exe`
 
 ## Commands
 
@@ -154,6 +184,7 @@ Environment variables:
 |---------|-------------|---------|
 | `PORT` | Web server port | `4187` |
 | `CODEX_APP_SERVER_PORT` | Local `codex app-server` port | `4188` |
+| `CODEX_CLI_PATH` | Override path to the Codex CLI binary | unset |
 
 Example:
 
@@ -224,7 +255,7 @@ Conversation history, task lists, and message generation are still handled by th
 <summary><b>Known Limitations</b></summary>
 
 - **Not a full 1:1 extension clone** — Only the host behavior needed by the current frontend is implemented
-- **Narrow platform support** — Only `darwin-arm64` is wired today
+- **Platform support depends on your binary** — You need a matching vendor binary or a working system `codex` in `PATH`
 - **Some host APIs are still minimal** — Remote connections, MCP, and environment management are not fully implemented
 - **File picker UX still needs polish** — Upload works, but the interaction is not fully aligned with the extension yet
 - **Vendor upgrades may require re-adaptation** — Changes inside `vendor/codex` may require shell updates
