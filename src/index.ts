@@ -19,6 +19,7 @@ import {
 } from "./config.js";
 import { handleFetchRoute } from "./fetch-routes.js";
 import { renderAppHtml, renderProjectPage } from "./html.js";
+import { renderManifest, renderServiceWorker } from "./pwa.js";
 import { discoverProjects } from "./projects.js";
 import { buildInjectedShim } from "./shim.js";
 import { HostStateStore } from "./state.js";
@@ -915,6 +916,19 @@ appServerBridge.on("state", (state, errorMessage) => {
 app.use(express.json());
 app.use("/resources", express.static(path.join(vendorRoot, "resources"), { fallthrough: false }));
 app.use("/webview", express.static(webviewRoot, { fallthrough: false }));
+app.use("/static", express.static(path.join(repoRoot, "static"), { fallthrough: false }));
+
+app.get("/sw.js", (_request, response) => {
+  response.type("application/javascript").send(renderServiceWorker());
+});
+
+app.get("/manifest.json", (_request, response) => {
+  response.json(renderManifest());
+});
+
+app.get(/^\/apple-touch-icon.*\.png$/, (_request, response) => {
+  response.sendFile(path.join(repoRoot, "static", "pwa", "apple-touch-icon.png"));
+});
 
 app.get("/", async (_request, response) => {
   const projects = await discoverProjects();
@@ -941,7 +955,7 @@ app.get("/app", async (request, response) => {
 });
 
 app.get("/favicon.ico", (_request, response) => {
-  response.status(204).end();
+  response.sendFile(path.join(repoRoot, "static", "pwa", "icon-192.png"));
 });
 
 app.get("/healthz", (_request, response) => {

@@ -58,6 +58,7 @@ graph TB
 - **Workspace File Mention** — `@` can search and attach files from the current project
 - **Task Isolation by Project** — Recent tasks are scoped to the current project path
 - **Auto Reconnect** — The browser bridge and `codex app-server` reconnect automatically after disconnects
+- **Installable PWA Shell** — Ships `manifest.json`, `sw.js`, and app icons for standalone install
 - **Minimal Host Emulation** — Implements the `vscode://codex/*` routes, shared objects, and persisted atoms needed by the frontend
 
 ## Prerequisites
@@ -257,6 +258,7 @@ Conversation history, task lists, and message generation are still handled by th
 - **Not a full 1:1 extension clone** — Only the host behavior needed by the current frontend is implemented
 - **Platform support depends on your binary** — You need a matching vendor binary or a working system `codex` in `PATH`
 - **Some host APIs are still minimal** — Remote connections, MCP, and environment management are not fully implemented
+- **PWA support is intentionally minimal** — Install works, but offline capability is limited to shell assets
 - **File picker UX still needs polish** — Upload works, but the interaction is not fully aligned with the extension yet
 - **Vendor upgrades may require re-adaptation** — Changes inside `vendor/codex` may require shell updates
 

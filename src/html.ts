@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { renderPwaHeadTags, renderPwaRegisterScript } from "./pwa.js";
 import type { ProjectInfo } from "./projects.js";
 
 const themeStorageKey = "web-cc-theme";
@@ -206,13 +207,15 @@ function escapeHtml(value: string): string {
 
 export function renderProjectPage(projects: ProjectInfo[]): string {
   const serializedProjects = JSON.stringify(projects);
+  const pwaHeadTags = renderPwaHeadTags();
+  const pwaRegisterScript = renderPwaRegisterScript();
 
   return `<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0d1117" />
+    ${pwaHeadTags}
     <title>Codex Projects</title>
     <style>
 ${sharedThemeVariables}
@@ -623,6 +626,7 @@ ${sharedThemeVariables}
         renderProjects();
       })();
     </script>
+    ${pwaRegisterScript}
   </body>
 </html>`;
 }
@@ -634,6 +638,8 @@ export function renderAppHtml(
   _initialRoute: string | null,
 ): string {
   const projectName = path.basename(projectPath) || projectPath;
+  const pwaHeadTags = renderPwaHeadTags();
+  const pwaRegisterScript = renderPwaRegisterScript();
   const themeScript = `<script>
     (function () {
       var themeStorageKey = ${JSON.stringify(themeStorageKey)};
@@ -1480,7 +1486,7 @@ ${sharedCodexTokenVariables}
     )
     .replace(
       "</head>",
-      `${themeScript}${shellRuntimeScript}${shellStyle}${injectedShim}</head>`,
+      `${pwaHeadTags}${themeScript}${shellRuntimeScript}${shellStyle}${injectedShim}${pwaRegisterScript}</head>`,
     )
     .replace(/<body([^>]*)>/, `<body$1>${shellNav}`)
     .replace(
